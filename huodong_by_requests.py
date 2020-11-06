@@ -11,10 +11,10 @@ price_pattern = re.compile('(\d+.\d+)')
 GMT_FORMAT = '%a, %d %b %Y %H:%M:%S GMT+08'
 CN_FORMAT = '%A, %B %d, %Y %I:%M %p'
 CN_ONE_FORMAT = '%Y年%m月%d日 %H:%M'
-
+keys = []
 headers={'User-Agent':random.choice('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.83 Safari/537.36')}
 
-def send_request(url):
+def send_request(url, file_name):
     """
     爬取一个页面
     """
@@ -22,9 +22,14 @@ def send_request(url):
     response = requests.get(url)
     soup = BeautifulSoup(response.text,'html.parser')
     for card in soup.find_all("div", attrs=["class","search-tab-content-item-mesh"]):
-        time.sleep(2)
         sub_href = card.a.attrs["href"]
         sub_href = sub_href.split("?")[0].lower()
+        if sub_href in keys:
+            continue
+        else:
+            second = random.randint(4,10)
+            time.sleep(second)
+            keys.append(sub_href)
         sub_url = "https://www.huodongxing.com" + sub_href
         print(sub_url)
         sub_query = requests.get(sub_url)
@@ -89,14 +94,16 @@ def send_request(url):
             # print("标签",tag)
             # print("机构",org_id)
             # print("***************")
-            with open('/root/spider/log.txt', 'a') as f:
+            with open(file_name, 'a') as f:
                 f.write('{{\"id\": \"{0}\", \"name\": \"{1}\", \"start_at\": \"{2}\", \"end_at\": \"{3}\", \"location\": \"{4}\", \"price\": \"{5}\", \"member_limit\": \"{6}\", \"follow\": \"{7}\", \"view\": \"{8}\", \"label\": \"{9}\", \"oids\": \"{10}\", \"url\": \"{11}\"}},\n'.format(
                     event_id, title, start, end, address, ','.join(prices), limit_num, follow, visitor_num, tag, org_id, event_url))
         except Exception as e:
-            with open('/root/spider/log.txt', 'a') as f:
+            with open(file_name, 'a') as f:
                 f.write('{{\"url\": \"{0}\"}},\n'.format(sub_url))
         
 if __name__ == "__main__":
+    url = 'https://www.huodongxing.com/events?orderby=n&d=ts&date=2019-01-01&dateTo=2019-01-30&city=%E5%85%A8%E9%83%A8&page={0}'
+    file_name = "/root/spider/2019-01-01.txt"
     pages = 1000
     for i in range(1, pages):
-        send_request('https://www.huodongxing.com/events?page={0}'.format(i))
+        send_request(url.format(i), file_name)
