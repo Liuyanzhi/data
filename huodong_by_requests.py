@@ -18,7 +18,6 @@ def send_request(url, file_name):
     """
     爬取一个页面
     """
-    print(url)
     response = requests.get(url)
     soup = BeautifulSoup(response.text,'html.parser')
     for card in soup.find_all("div", attrs=["class","search-tab-content-item-mesh"]):
@@ -27,14 +26,13 @@ def send_request(url, file_name):
         if sub_href in keys:
             continue
         else:
-            second = random.randint(4,10)
+            second = random.randint(5,10)
             time.sleep(second)
             keys.append(sub_href)
         sub_url = "https://www.huodongxing.com" + sub_href
-        print(sub_url)
-        sub_query = requests.get(sub_url)
-        sub_soup = BeautifulSoup(sub_query.text,'html.parser')
         try:
+            sub_query = requests.get(sub_url)
+            sub_soup = BeautifulSoup(sub_query.text,'html.parser')
             event_url = sub_soup.find("div", attrs=["class","detail-link-div"]).a.attrs["href"]
             match_url = pattern.search(event_url)
             event_id = match_url.group()
@@ -98,12 +96,21 @@ def send_request(url, file_name):
                 f.write('{{\"id\": \"{0}\", \"name\": \"{1}\", \"start_at\": \"{2}\", \"end_at\": \"{3}\", \"location\": \"{4}\", \"price\": \"{5}\", \"member_limit\": \"{6}\", \"follow\": \"{7}\", \"view\": \"{8}\", \"label\": \"{9}\", \"oids\": \"{10}\", \"url\": \"{11}\"}},\n'.format(
                     event_id, title, start, end, address, ','.join(prices), limit_num, follow, visitor_num, tag, org_id, event_url))
         except Exception as e:
+            print(sub_url)
             with open(file_name, 'a') as f:
                 f.write('{{\"url\": \"{0}\"}},\n'.format(sub_url))
-        
+
 if __name__ == "__main__":
-    url = 'https://www.huodongxing.com/events?orderby=n&d=ts&date=2019-01-01&dateTo=2019-01-30&city=%E5%85%A8%E9%83%A8&page={0}'
-    file_name = "/root/spider/2019-01-01.txt"
-    pages = 1000
-    for i in range(1, pages):
-        send_request(url.format(i), file_name)
+    data = {"2019-01-01": "2019-01-30","2019-02-01": "2019-02-28","2019-03-01": "2019-03-30","2019-04-01": "2019-04-30","2019-05-01": "2019-05-30","2019-06-01": "2019-06-30","2019-07-01": "2019-07-30","2019-08-01": "2019-08-30","2019-09-01": "2019-09-30","2019-10-01": "2019-10-30","2019-11-01": "2019-11-30","2019-12-01": "2019-12-30"}
+    for k,v in data.items():
+        file_name = "/root/spider/{0}.txt".format(k)
+        pages = 1000
+        for i in range(1, pages):
+            try:
+                second = random.randint(5,10)
+                time.sleep(second)
+                send_request('https://www.huodongxing.com/events?orderby=n&d=ts&date={0}&dateTo={1}&city=%E5%85%A8%E9%83%A8&page={2}'.format(k, v, i), file_name)
+            except Exception as e:
+                print('https://www.huodongxing.com/events?orderby=n&d=ts&date={0}&dateTo={1}&city=%E5%85%A8%E9%83%A8&page={2}'.format(k, v, i))
+                second = random.randint(300,600)
+                time.sleep(second)
